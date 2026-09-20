@@ -1,32 +1,49 @@
-const response = await axios.post(
-    'https://api.sandbox.pawapay.io/v2/checkouts',
-    {
-        checkoutId: `test_${Date.now()}`,
-        returnUrl: 'https://example.com',
-        returnMethod: 'INSTANT',
-        defaultLanguage: 'en',
-        countries: ['RWA'],
-        expiresAfter: 60,
-        amounts: [{
-            country: 'RWA',
-            currency: 'RWF',
-            amount: amount.toString() // PawaPay expects the amount as a string
-        }],
-        payer: {
-            type: 'MMO',
-            accountDetails: {
-                phoneNumber: phone,
-                provider: provider,
-                allowCustomerToOverride: true
-            }
-        },
-        reason: { en: 'Demo Payment' },
-        metadata: [{ customerPhone: phone, provider: provider }]
-    },
-    {
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        }
+import axios from 'axios';
+
+export default async function handler(req, res) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
     }
-);
+
+    const { amount, phone, provider } = req.body;
+    const token = process.env.PAWAPAY_TOKEN;
+
+    try {
+        const response = await axios.post(
+            'https://api.sandbox.pawapay.io/v2/checkouts',
+            {
+                checkoutId: `test_${Date.now()}`,
+                returnUrl: 'https://example.com',
+                returnMethod: 'INSTANT',
+                defaultLanguage: 'en',
+                countries: ['RWA'],
+                expiresAfter: 60,
+                amounts: [{
+                    country: 'RWA',
+                    currency: 'RWF',
+                    amount: amount.toString()
+                }],
+                payer: {
+                    type: 'MMO',
+                    accountDetails: {
+                        phoneNumber: phone,
+                        provider: provider,
+                        allowCustomerToOverride: true
+                    }
+                },
+                reason: { en: 'Demo Payment' },
+                metadata: [{ customerPhone: phone, provider: provider }]
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        res.json({ success: true, checkoutId: response.data.checkoutId });
+    } catch (error) {
+        console.error('PAWAPAY ERROR:', error.response ? error.response.data : error.message);
+        res.status(500).json({ success: false, error: 'Payment failed' });
+    }
+}
