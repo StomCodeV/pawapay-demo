@@ -12,7 +12,6 @@
 </head>
 <body>
     <h2>Unlock Premium - 100 RWF</h2>
-
     <label>Phone Number</label>
     <input type="tel" id="phone" placeholder="2507XXXXXXXX" required>
 
@@ -32,11 +31,11 @@
             const status = document.getElementById('status');
 
             if (!phone) { status.innerText = 'Please enter phone number'; return; }
-
             status.innerText = 'Initiating payment...';
 
             try {
-                const res = await fetch('/create-payment', {
+                // Notice the /api/ in the URL
+                const res = await fetch('/api/create-payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ amount: 100, phone, provider })
