@@ -1,35 +1,32 @@
-// api/create-payment.js
-const axios = require('axios');
-
-module.exports = async (req, res) => {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
-
-    const { amount, phone, provider } = req.body;
-    const token = process.env.PAWAPAY_TOKEN;
-
-    try {
-        const response = await axios.post(
-            'https://api.sandbox.pawapay.io/v2/checkouts',
-            {
-                checkoutId: `test_${Date.now()}`,
-                returnUrl: 'https://example.com',
-                countries: ['RWA'],
-                amounts: [{ country: 'RWA', currency: 'RWF', amount: amount }],
-                reason: { en: 'Demo Payment' },
-                metadata: [{ customerPhone: phone, provider: provider }]
-            },
-            {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+const response = await axios.post(
+    'https://api.sandbox.pawapay.io/v2/checkouts',
+    {
+        checkoutId: `test_${Date.now()}`,
+        returnUrl: 'https://example.com',
+        returnMethod: 'INSTANT', // Recommended per docs
+        defaultLanguage: 'en',
+        countries: ['RWA'],
+        expiresAfter: 60,
+        amounts: [{ 
+            country: 'RWA', 
+            currency: 'RWF', 
+            amount: amount.toString() // <-- Must be a string
+        }],
+        payer: { // <-- This entire "payer" object is required for checkouts
+            type: 'MMO',
+            accountDetails: {
+                phoneNumber: phone,
+                provider: provider,
+                allowCustomerToOverride: true
             }
-        );
-        res.json({ success: true, checkoutId: response.data.checkoutId });
-    } catch (error) {
-        console.error('Error:', error.response ? error.response.data : error.message);
-        res.status(500).json({ success: false, error: 'Payment failed' });
+        },
+        reason: { en: 'Demo Payment' },
+        metadata: [{ customerPhone: phone, provider: provider }]
+    },
+    {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
     }
-};
+);
