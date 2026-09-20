@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pay 100 RWF</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 400px; margin: auto; }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ccc; font-size: 16px; }
+        button { background: #6b21a8; color: white; border: none; cursor: pointer; }
+        #status { margin-top: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Unlock Premium - 100 RWF</h2>
+    <label>Phone Number</label>
+    <input type="tel" id="phone" placeholder="2507XXXXXXXX" required>
+
+    <label>Provider</label>
+    <select id="provider">
+        <option value="MTN_MOMO_RWA">MTN Mobile Money</option>
+        <option value="AIRTEL_RWA">Airtel Money</option>
+    </select>
+
+    <button onclick="payNow()">Pay 100 RWF</button>
+    <p id="status"></p>
+
+    <script>
+        async function payNow() {
+            const phone = document.getElementById('phone').value;
+            const provider = document.getElementById('provider').value;
+            const status = document.getElementById('status');
+
+            if (!phone) { status.innerText = 'Please enter phone number'; return; }
+            status.innerText = 'Initiating payment...';
+
+            try {
+                const res = await fetch('/api/create-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: 100, phone, provider })
+                });
+                const data = await res.json();
+                status.innerText = data.success
+                    ? '✅ Check your phone for the PIN prompt!'
+                    : '❌ Error: ' + data.error;
+            } catch (e) {
+                status.innerText = '❌ Network error';
+            }
+        }
+    </script>
+</body>
+</html>
