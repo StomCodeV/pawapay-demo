@@ -1,50 +1,65 @@
-import axios from 'axios';
-import crypto from 'node:crypto';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pay 100 RWF with Flutterwave</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 400px; margin: auto; }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box;}
+        button { background: #f5a623; color: white; border: none; cursor: pointer; font-weight: bold; }
+        #status { margin-top: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Unlock Premium - 100 RWF</h2>
+    <p>Pay securely via Mobile Money.</p>
 
-export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
+    <!-- We use a <form> here to force the user to enter a phone number -->
+    <form id="paymentForm">
+        <label>Phone Number (Include country code, e.g., 250788...)</label>
+        <input type="tel" id="phone" placeholder="250788123456" required>
 
-    const { amount, phone, provider } = req.body;
-    const secretKey = process.env.FLW_SECRET_KEY;
+        <label>Provider</label>
+        <select id="provider">
+            <option value="MTN">MTN Mobile Money</option>
+            <option value="AIRTEL">Airtel Money</option>
+        </select>
 
-    if (!secretKey) {
-        return res.status(500).json({ error: 'Flutterwave secret key is not configured' });
-    }
+        <button type="submit">Pay 100 RWF</button>
+    </form>
+    <p id="status"></p>
 
-    try {
-        const response = await axios.post(
-            'https://api.flutterwave.com/v3/charges?type=mobile_money_rwanda',
-            {
-                amount: amount,
-                currency: 'RWF',
-                email: 'customer@example.com', // Flutterwave requires an email
-                tx_ref: `tx-${Date.now()}`, // Unique transaction reference
-                phone_number: phone,
-                network: provider, // e.g., 'MTN' or 'AIRTEL'
-                // The redirect_url is where Flutterwave sends the user after payment
-                redirect_url: 'https://your-app-name.vercel.app/api/flw-callback' 
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${secretKey}`,
-                    'Content-Type': 'application/json'
+    <script>
+        // Listen for the form submission instead of a button click
+        document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Stop the page from reloading
+            
+            const phone = document.getElementById('phone').value;
+            const provider = document.getElementById('provider').value;
+            const status = document.getElementById('status');
+
+            status.innerText = 'Initiating payment...';
+
+            try {
+                const res = await fetch('/api/create-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: 100, phone: phone, provider: provider })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success && data.paymentLink) {
+                    status.innerText = 'Redirecting to secure payment page...';
+                    window.location.href = data.paymentLink;
+                } else {
+                    status.innerText = '❌ Error: ' + JSON.stringify(data.error);
                 }
+            } catch (e) {
+                status.innerText = '❌ Network error';
             }
-        );
-
-        // Return the payment link to the frontend
-        return res.json({
-            success: true,
-            paymentLink: response.data.data.link
         });
-
-    } catch (error) {
-        console.error('FLUTTERWAVE ERROR:', error.response?.data || error.message);
-        return res.status(error.response?.status || 500).json({
-            success: false,
-            error: error.response?.data || error.message
-        });
-    }
-}
+    </script>
+</body>
+</html>
