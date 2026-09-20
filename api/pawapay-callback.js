@@ -1,11 +1,21 @@
-module.exports = async (req, res) => {
-    // PawaPay sends a POST request with the payment status
-    console.log('🔔 CALLBACK RECEIVED:', JSON.stringify(req.body, null, 2));
-
-    if (req.body.status === 'COMPLETED') {
-        console.log('✅ PAYMENT SUCCESSFUL! Unlocking access...');
-        // Add your database logic here to grant the user access
+const response = await axios.post(
+    'https://api.sandbox.pawapay.io/v2/deposits',
+    {
+        depositId: `test_${Date.now()}`, // Use depositId, not checkoutId
+        amount: amount.toString(),
+        currency: 'RWF',
+        payer: {
+            type: 'MMO',
+            accountDetails: {
+                phoneNumber: phone,
+                provider: provider
+            }
+        }
+    },
+    {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
     }
-    
-    res.status(200).send('OK');
-};
+);
