@@ -3,16 +3,16 @@ const response = await axios.post(
     {
         checkoutId: `test_${Date.now()}`,
         returnUrl: 'https://example.com',
-        returnMethod: 'INSTANT', // Recommended per docs
+        returnMethod: 'INSTANT',
         defaultLanguage: 'en',
         countries: ['RWA'],
         expiresAfter: 60,
-        amounts: [{ 
-            country: 'RWA', 
-            currency: 'RWF', 
-            amount: amount.toString() // <-- Must be a string
+        amounts: [{
+            country: 'RWA',
+            currency: 'RWF',
+            amount: amount.toString() // PawaPay expects the amount as a string
         }],
-        payer: { // <-- This entire "payer" object is required for checkouts
+        payer: {
             type: 'MMO',
             accountDetails: {
                 phoneNumber: phone,
