@@ -1,15 +1,13 @@
+// api/create-payment.js
 const axios = require('axios');
 
 module.exports = async (req, res) => {
-    // Vercel handles CORS automatically
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
     const { amount, phone, provider } = req.body;
-    
-    // This pulls the token securely from Vercel settings
-    const token = process.env.PAWAPAY_TOKEN; 
+    const token = process.env.PAWAPAY_TOKEN;
 
     try {
         const response = await axios.post(
