@@ -5,18 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pay 100 RWF with Flutterwave</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; max-width: 400px; margin: auto; }
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 400px; margin: auto; text-align: center;}
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box;}
         button { background: #f5a623; color: white; border: none; cursor: pointer; font-weight: bold; }
         #status { margin-top: 15px; font-weight: bold; }
+        .success-box { background: #d4edda; color: #155724; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none; }
     </style>
 </head>
 <body>
+    <div id="successMessage" class="success-box">✅ Payment Successful! Premium Unlocked.</div>
+
     <h2>Unlock Premium - 100 RWF</h2>
     <p>Pay securely via Mobile Money.</p>
 
     <form id="paymentForm">
-        <label>Phone Number (Test Mode: Use 250780000000)</label>
+        <label>Phone Number (Test Mode: 250788123456)</label>
         <input type="tel" id="phone" placeholder="250788123456" required>
 
         <label>Provider</label>
@@ -30,6 +33,12 @@
     <p id="status"></p>
 
     <script>
+        // Check the URL when the page loads to see if we just came back from a payment
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('payment') === 'success') {
+            document.getElementById('successMessage').style.display = 'block';
+        }
+
         document.getElementById('paymentForm').addEventListener('submit', async (e) => {
             e.preventDefault(); 
             
@@ -53,7 +62,6 @@
                         status.innerText = 'Redirecting to secure payment page...';
                         window.location.href = data.paymentLink;
                     } else if (data.isDirectCharge) {
-                        // This happens when Flutterwave sends a USSD push directly to the phone
                         status.innerText = '✅ ' + data.message;
                     }
                 } else {
