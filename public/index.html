@@ -15,9 +15,8 @@
     <h2>Unlock Premium - 100 RWF</h2>
     <p>Pay securely via Mobile Money.</p>
 
-    <!-- We use a <form> here to force the user to enter a phone number -->
     <form id="paymentForm">
-        <label>Phone Number (Include country code, e.g., 250788...)</label>
+        <label>Phone Number (Test Mode: Use 250780000000)</label>
         <input type="tel" id="phone" placeholder="250788123456" required>
 
         <label>Provider</label>
@@ -31,9 +30,8 @@
     <p id="status"></p>
 
     <script>
-        // Listen for the form submission instead of a button click
         document.getElementById('paymentForm').addEventListener('submit', async (e) => {
-            e.preventDefault(); // Stop the page from reloading
+            e.preventDefault(); 
             
             const phone = document.getElementById('phone').value;
             const provider = document.getElementById('provider').value;
@@ -50,9 +48,14 @@
                 
                 const data = await res.json();
                 
-                if (data.success && data.paymentLink) {
-                    status.innerText = 'Redirecting to secure payment page...';
-                    window.location.href = data.paymentLink;
+                if (data.success) {
+                    if (data.paymentLink) {
+                        status.innerText = 'Redirecting to secure payment page...';
+                        window.location.href = data.paymentLink;
+                    } else if (data.isDirectCharge) {
+                        // This happens when Flutterwave sends a USSD push directly to the phone
+                        status.innerText = '✅ ' + data.message;
+                    }
                 } else {
                     status.innerText = '❌ Error: ' + JSON.stringify(data.error);
                 }
