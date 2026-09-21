@@ -1,5 +1,4 @@
 import axios from 'axios';
-import crypto from 'node:crypto';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -9,8 +8,16 @@ export default async function handler(req, res) {
     const { amount, phone, provider } = req.body;
     const secretKey = process.env.FLW_SECRET_KEY;
 
+    // 👇 DEBUGGING: This will show up in your Vercel Runtime Logs
+    console.log("Received Data:", { amount, phone, provider });
+
     if (!secretKey) {
         return res.status(500).json({ error: 'Flutterwave secret key is not configured' });
+    }
+
+    // 👇 NEW CHECK: Stop if phone number is missing
+    if (!phone) {
+        return res.status(400).json({ success: false, error: 'Phone number is required' });
     }
 
     try {
@@ -19,12 +26,11 @@ export default async function handler(req, res) {
             {
                 amount: amount,
                 currency: 'RWF',
-                email: 'customer@example.com', // Flutterwave requires an email
-                tx_ref: `tx-${Date.now()}`, // Unique transaction reference
-                phone_number: phone,
-                network: provider, // e.g., 'MTN' or 'AIRTEL'
-                // The redirect_url is where Flutterwave sends the user after payment
-                redirect_url: 'https://pawapay-demo.vercel.app/' 
+                email: 'customer@example.com', 
+                tx_ref: `tx-${Date.now()}`, 
+                phone_number: phone, // This is what Flutterwave needs
+                network: provider, 
+                redirect_url: 'https://pawapay-demo.vercel.app/api/flw-callback' 
             },
             {
                 headers: {
@@ -34,7 +40,6 @@ export default async function handler(req, res) {
             }
         );
 
-        // Return the payment link to the frontend
         return res.json({
             success: true,
             paymentLink: response.data.data.link
