@@ -8,16 +8,8 @@ export default async function handler(req, res) {
     const { amount, phone, provider } = req.body;
     const secretKey = process.env.FLW_SECRET_KEY;
 
-    // 👇 DEBUGGING: This will show up in your Vercel Runtime Logs
-    console.log("Received Data:", { amount, phone, provider });
-
     if (!secretKey) {
         return res.status(500).json({ error: 'Flutterwave secret key is not configured' });
-    }
-
-    // 👇 NEW CHECK: Stop if phone number is missing
-    if (!phone) {
-        return res.status(400).json({ success: false, error: 'Phone number is required' });
     }
 
     try {
@@ -28,7 +20,7 @@ export default async function handler(req, res) {
                 currency: 'RWF',
                 email: 'customer@example.com', 
                 tx_ref: `tx-${Date.now()}`, 
-                phone_number: phone, // This is what Flutterwave needs
+                phone_number: phone, 
                 network: provider, 
                 redirect_url: 'https://pawapay-demo.vercel.app/api/flw-callback' 
             },
@@ -40,10 +32,26 @@ export default async function handler(req, res) {
             }
         );
 
-        return res.json({
-            success: true,
-            paymentLink: response.data.data.link
-        });
+        // Debug: Print the exact response from Flutterwave
+        console.log("FLW RESPONSE:", JSON.stringify(response.data, null, 2));
+
+        // Flutterwave might return a link for standard checkout, OR it might be a direct charge
+        const paymentLink = response.data?.data?.link || response.data?.meta?.authorization?.redirect;
+
+        if (paymentLink) {
+            // If there is a hosted page link, send it to the frontend
+            return res.json({
+                success: true,
+                paymentLink: paymentLink
+            });
+        } else {
+            // If there is no link, it's a direct charge (USSD Push)
+            return res.json({
+                success: true,
+                isDirectCharge: true,
+                message: 'Payment initiated. Please check your phone for the PIN prompt.'
+            });
+        }
 
     } catch (error) {
         console.error('FLUTTERWAVE ERROR:', error.response?.data || error.message);
